@@ -15,8 +15,8 @@ r = Redis(
 REDIS_NAMES_KEY = "names"
 
 
-@app.route("/<doc>", methods=["GET"])
-def process_doc():
+@app.route("/doc/<doc>", methods=["POST"])
+def process_doc(doc):
     tokens = word_tokenize(doc)
     for i in tokens:
         new = r.rpush(i, "doc1")
