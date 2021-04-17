@@ -29,11 +29,23 @@ joblib==1.0.1
 markupsafe==1.1.1
     # via jinja2
 nltk==3.6.1
+    # via
+    #   flasksearchapp (setup.py)
+    #   textblob
+numpy==1.19.5
+    # via
+    #   flasksearchapp (setup.py)
+    #   pandas
+pandas==1.1.5
     # via flasksearchapp (setup.py)
 pygments==2.8.1
     # via httpie
 pysocks==1.7.1
     # via requests
+python-dateutil==2.8.1
+    # via pandas
+pytz==2021.1
+    # via pandas
 redis==3.5.3
     # via flasksearchapp (setup.py)
 regex==2021.4.4
@@ -44,6 +56,10 @@ requests[socks]==2.25.1
     # via
     #   httpie
     #   requests-toolbelt
+six==1.15.0
+    # via python-dateutil
+textblob==0.15.3
+    # via flasksearchapp (setup.py)
 tqdm==4.60.0
     # via nltk
 urllib3==1.26.4
