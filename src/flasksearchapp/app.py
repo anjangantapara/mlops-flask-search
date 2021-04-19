@@ -20,7 +20,6 @@ r_tokens = StrictRedis(
 )
 
 
-
 class redis_io():
 
     def __init__(self, redis_connection):
@@ -31,6 +30,7 @@ class redis_io():
         for key in self.redis_connection.keys():
             list_values.append(self.redis_connection.get(key))
         return {"doc_content": list_values}
+
     def get_all_keys_values(self):
         list_keys = []
         list_values = []
@@ -39,11 +39,19 @@ class redis_io():
             list_values.append(r_docs.get(key))
         return {"doc_names": list_keys, "doc_content": list_values}
 
+
 redis_io.redis_connection = r_docs
 
 
 @app.route('/api/store/<submit_doc>', methods=['POST'])
 def store_input(submit_doc):
+    """
+    API to store the input strings/documents
+    :param submit_doc: not used
+    :type submit_doc: str
+    :return: standard text: Inserted the doc to redis
+    :rtype: str
+    """
     content = dict(request.json)
     doc_name = list(content.keys())[0]
     doc_content = list(content.values())[0]
@@ -59,6 +67,11 @@ def store_input(submit_doc):
 
 @app.route('/api/process_data', methods=['GET'])
 def process():
+    """
+    API to process_data
+    :return: dictionary containing the processed text
+    :rtype: dict
+    """
     redis_db = redis_io(redis_connection=r_docs)
     doc_content = redis_db.get_all_values()['doc_content']
     # initializing the input data
@@ -72,6 +85,13 @@ def process():
 
 @app.route('/api/search_string/<search_string>', methods=['GET'])
 def search(search_string):
+    """
+    API to search "search_string" in the stored documents
+    :param search_string: search string provided by the user
+    :type search_string: str
+    :return: returns results i.e. return list of documents that are closest match to the search string
+    :rtype: dict
+    """
     processdata = ProcessData(search_string=search_string)
     res_list = processdata.get_similar_articles()
     return {"res": res_list}
@@ -79,6 +99,13 @@ def search(search_string):
 
 @app.route('/api/get_docs/<docs>', methods=['GET'])
 def get_docs(docs):
+    """
+    API to fetch all documents
+    :param docs:
+    :type docs:str
+    :return:
+    :rtype:dict
+    """
     redis_db = redis_io(redis_connection=r_docs)
     keys_values_dict = redis_db.get_all_keys_values()
     return keys_values_dict
