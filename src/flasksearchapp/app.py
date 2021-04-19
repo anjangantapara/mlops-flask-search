@@ -1,27 +1,9 @@
 import os
 
 from flask import Flask, request
-from nltk.tokenize import word_tokenize
+from flasksearchapp.process import ProcessData
 from redis import Redis, StrictRedis
 
-import pandas as pd
-import numpy as np
-import string
-import random
-
-import nltk
-from nltk.corpus import brown
-from nltk.corpus import reuters
-
-from nltk.tokenize import word_tokenize
-from nltk.tokenize import RegexpTokenizer
-
-from nltk.corpus import stopwords
-
-from nltk.stem.porter import PorterStemmer
-from nltk.stem import SnowballStemmer
-from sklearn.feature_extraction.text import TfidfVectorizer  # Instantiate a TfidfVectorizer object
-from process import create_tdm, text_processing, get_similar_articles
 app = Flask(__name__)
 r_docs = Redis(
     host=os.environ.get("REDIS_HOST", "localhost"),
@@ -36,66 +18,82 @@ r_tokens = StrictRedis(
     db='1',
     decode_responses=True
 )
-REDIS_NAMES_KEY = "names"
 
 
 
-@app.route('/api/<submit_doc>', methods=['POST'])
+class redis_io():
+
+    def __init__(self, redis_connection):
+        self.redis_connection = redis_connection
+
+    def get_all_values(self):
+        list_values = []
+        for key in self.redis_connection.keys():
+            list_values.append(self.redis_connection.get(key))
+        return {"doc_content": list_values}
+    def get_all_keys_values(self):
+        list_keys = []
+        list_values = []
+        for key in self.redis_connection.keys():
+            list_keys.append(key)
+            list_values.append(r_docs.get(key))
+        return {"doc_names": list_keys, "doc_content": list_values}
+
+redis_io.redis_connection = r_docs
+
+
+@app.route('/api/store/<submit_doc>', methods=['POST'])
 def store_input(submit_doc):
     content = dict(request.json)
     doc_name = list(content.keys())[0]
     doc_content = list(content.values())[0]
-
-    tokens = word_tokenize(doc_content)
+    #    tokens = word_tokenize(doc_content)
     r_docs.set(doc_name, doc_content)
-    for i, val in enumerate(tokens):
-        r_tokens.rpush(doc_name, val)
-    # for i in tokens:
-    #     new_list = r_tokens.rpush(i, doc_name)
-    #     new_str = r_docs.set(doc_name, doc_content)
-    return {"tokens": tokens}
+    return "Inserted the doc to redis"
 
-@app.route('/api/process', methods=['GET'])
+
+#    for i, val in enumerate(tokens):
+#        r_tokens.rpush(doc_name, val)
+#   return {"tokens": tokens}
+
+
+@app.route('/api/process_data', methods=['GET'])
 def process():
-    content = get_docs()
-    doc_content = content['doc_content']
-    processed_text = text_processing(doc_content)
-    return {'key': processed_text}
+    redis_db = redis_io(redis_connection=r_docs)
+    doc_content = redis_db.get_all_values()['doc_content']
+    # initializing the input data
+    ProcessData.set_list_texts(input_list_text=doc_content)
+    # processing the text
+    ProcessData.text_processing()
+    # calling create_tdm to create tdm matrix
+    ProcessData.create_tdm()
+    return {'key': ProcessData.text_zonder_punctuations}
 
-@app.route('/api/search/<search_string>', methods=['GET'])
+
+@app.route('/api/search_string/<search_string>', methods=['GET'])
 def search(search_string):
-    processed_text = process()
-    df_tdm, vectorizer = create_tdm(processed_text)
-    res_list = get_similar_articles(search_string, df_tdm, vectorizer)
-
-
-
+    processdata = ProcessData(search_string=search_string)
+    res_list = processdata.get_similar_articles()
     return {"res": res_list}
 
-@app.route('/api/<docs>', methods=['GET'])
-def get_docs():
-    list_keys = []
-    list_values = []
-    for key in r_docs.keys():
-        list_keys.append(key)
-        list_values.append(r_docs.get(key))
-    return {"doc_names": list_keys, "doc_content": list_values}
 
-@app.route('/api/<tokens>', methods=['GET'])
+@app.route('/api/get_docs/<docs>', methods=['GET'])
+def get_docs(docs):
+    redis_db = redis_io(redis_connection=r_docs)
+    keys_values_dict = redis_db.get_all_keys_values()
+    return keys_values_dict
+
+
+@app.route('/api/get_tokens/<tokens>', methods=['GET'])
 def get_tokens(tokens):
-    dict_tokens ={}
+    dict_tokens = {}
     for key in r_tokens.keys():
         list_temp = []
         while (r_tokens.llen(key) != 0):
             list_temp.append(r_tokens.rpop(key))
         dict_tokens[key] = list_temp
     return dict_tokens
-#
-# @app.route('/api/add_message/<uuid>', methods=['GET', 'POST'])
-# def add_message(uuid):
-#     content = request.json
-#     print content['mytext']
-#     return jsonify({"uuid":uuid})
+
 
 if __name__ == '__main__':
-    app.run(host= '0.0.0.0',debug=True)
+    app.run(host='0.0.0.0', debug=True)
