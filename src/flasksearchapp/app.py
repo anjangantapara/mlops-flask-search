@@ -117,7 +117,7 @@ def process() -> Dict:
     SearchDocuments.clean_all_documents()
     # calling create_tdm to create tdm matrix
     SearchDocuments.create_tdm()
-    return {'key': SearchDocuments.processed_documents}
+    return "Successfully created tf_idf matrix"
 
 
 @app.route('/api/search/<search_string>', methods=['GET'])
