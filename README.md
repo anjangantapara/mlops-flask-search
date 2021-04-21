@@ -17,3 +17,9 @@ List of API's:
    * eg:  ```http -v get http://localhost:8000/api/search/<search_string>```
 
 
+
+Usage:
+1. store your documents by calling store_doc api
+1. call process_data api
+1. call search api
+3. call get_doc_with_key api to see if the search worked
