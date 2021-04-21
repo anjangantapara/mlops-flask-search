@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask, request
-from flasksearchapp.process import ProcessData
+from flasksearchapp.process import SearchDocuments
 from redis import Redis, StrictRedis
 
 app = Flask(__name__)
@@ -73,14 +73,18 @@ def process():
     :rtype: dict
     """
     redis_db = redis_io(redis_connection=r_docs)
-    doc_content = redis_db.get_all_values()['doc_content']
+    all_doc_content = redis_db.get_all_keys_values()
+    #doc_content = redis_db.get_all_values()['doc_content']
     # initializing the input data
-    ProcessData.set_list_texts(input_list_text=doc_content)
+    SearchDocuments.set_documents(input_list_text=all_doc_content['doc_content'])
+    SearchDocuments.set_documents_names(input_list_names=all_doc_content['doc_names'])
+
+
     # processing the text
-    ProcessData.text_processing()
+    SearchDocuments.clean_all_documents()
     # calling create_tdm to create tdm matrix
-    ProcessData.create_tdm()
-    return {'key': ProcessData.text_zonder_punctuations}
+    SearchDocuments.create_tdm()
+    return {'key': SearchDocuments.processed_documents}
 
 
 @app.route('/api/search_string/<search_string>', methods=['GET'])
@@ -92,9 +96,9 @@ def search(search_string):
     :return: returns results i.e. return list of documents that are closest match to the search string
     :rtype: dict
     """
-    processdata = ProcessData(search_string=search_string)
-    res_list = processdata.get_similar_articles()
-    return {"res": res_list}
+    processdata = SearchDocuments(search_string=search_string)
+    res_list = processdata.get_relevant_documents()
+    return {"search_results": res_list}
 
 
 @app.route('/api/get_docs/<docs>', methods=['GET'])
@@ -109,6 +113,20 @@ def get_docs(docs):
     redis_db = redis_io(redis_connection=r_docs)
     keys_values_dict = redis_db.get_all_keys_values()
     return keys_values_dict
+
+@app.route('/api/get_doc_with_key/<key>', methods=['GET'])
+def get_doc_with_key(key):
+    """
+    API to fetch a specific document with key
+    :param key:
+    :type key:str
+    :return:
+    :rtype:dict
+    """
+    #redis_db = redis_io(redis_connection=r_docs)
+    #keys_values_dict = redis_db.get_all_keys_values()
+    doc = r_docs.get(key)
+    return doc
 
 
 @app.route('/api/get_tokens/<tokens>', methods=['GET'])
