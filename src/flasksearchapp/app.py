@@ -120,7 +120,7 @@ def process() -> Dict:
     return {'key': SearchDocuments.processed_documents}
 
 
-@app.route('/api/search_string/<search_string>', methods=['GET'])
+@app.route('/api/search/<search_string>', methods=['GET'])
 def search(search_string)->Dict:
     """
     API to search "search_string" in the stored documents
