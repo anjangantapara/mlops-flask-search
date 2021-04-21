@@ -1,4 +1,5 @@
 import string
+from typing import Optional, List
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,7 @@ class SearchDocuments:
     vectorizer = TfidfVectorizer(stop_words='english', ngram_range=(1, 3),
                                  use_idf=True)  # sk-learn object containing the algo to vectorize
 
-    def __init__(self, search_string):
+    def __init__(self, search_string: str)->None:
         """
         initialize instance varaibles
         :param search_string:
@@ -29,16 +30,16 @@ class SearchDocuments:
         self.search_results = []
 
     @classmethod
-    def set_documents(cls, input_list_text):
+    def set_documents(cls, input_list_text: List[str]) -> None:
         """
         Function to initialize class variable documents
         :param input_list_text: list of documents
-        :type input_list_text: list(str)
+        :type input_list_text: list[str]
         """
         cls.documents = input_list_text
 
     @classmethod
-    def set_documents_names(cls, input_list_names):
+    def set_documents_names(cls, input_list_names: List[str]) -> None:
         """
         Mehod to set documents_names
         :param input_list_names: list of doc names
@@ -47,7 +48,7 @@ class SearchDocuments:
         cls.documents_names = input_list_names
 
     @classmethod
-    def clean_document(cls, text):
+    def clean_document(cls, text: str) -> str:
         """Function to remove punctuations, stem words and finally convert the text into lower case
         :param text: string/text that needs to be cleaned
         :type text: str
@@ -88,7 +89,7 @@ class SearchDocuments:
         X = X.T.toarray()  # Create a DataFrame and set the vocabulary as the index
         cls.df_tdm = pd.DataFrame(X, index=cls.vectorizer.get_feature_names())
 
-    def get_relevant_documents(self, n_top_hits=10):
+    def get_relevant_documents(self, n_top_hits: Optional[int] = 10) -> List[str]:
         """Function to compute similarity index
         :param n_top_hits: number of hits to show
         :type n_top_hits: int

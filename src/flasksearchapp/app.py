@@ -1,8 +1,9 @@
 import os
+from typing import List, Dict, AnyStr
 
 from flask import Flask, request
 from flasksearchapp.process import SearchDocuments
-from redis import Redis, StrictRedis
+from redis import Redis
 
 app = Flask(__name__)
 r_docs = Redis(
@@ -12,39 +13,48 @@ r_docs = Redis(
     decode_responses=True
 )
 
-r_tokens = StrictRedis(
-    host=os.environ.get("REDIS_HOST", "localhost"),
-    port=6379,
-    db='1',
-    decode_responses=True
-)
-
 
 class redis_io():
 
-    def __init__(self, redis_connection):
+    def __init__(self, redis_connection) -> None:
+        """
+        initi function for the redis_io class
+        :param redis_connection: redis_io object
+        :type redis_connection: Redis
+        """
         self.redis_connection = redis_connection
 
-    def get_all_values(self):
+    def get_all_values(self) -> Dict:
+        """
+        Method to grab all the values stored in Redis
+        :return: all the values/documents stored in Redis
+        :rtype: dict
+        """
         list_values = []
         for key in self.redis_connection.keys():
             list_values.append(self.redis_connection.get(key))
         return {"doc_content": list_values}
 
-    def get_all_keys_values(self):
+    def get_all_keys_values(self) -> Dict:
+        """
+        Method that returns both doc names and documents
+        :return: all_doc_content
+        :rtype: dict
+        """
         list_keys = []
         list_values = []
         for key in self.redis_connection.keys():
             list_keys.append(key)
             list_values.append(r_docs.get(key))
-        return {"doc_names": list_keys, "doc_content": list_values}
+        all_doc_content = {"doc_names": list_keys, "doc_content": list_values}
+        return all_doc_content
 
 
 redis_io.redis_connection = r_docs
 
 
 @app.route('/api/store_doc/<submit_doc>', methods=['POST'])
-def store_doc(submit_doc):
+def store_doc(submit_doc) -> AnyStr:
     """
     API to store the input strings/documents
     :param submit_doc: not used
@@ -61,7 +71,7 @@ def store_doc(submit_doc):
 
 
 @app.route('/api/get_docs/<docs>', methods=['GET'])
-def get_docs(docs):
+def get_docs(docs) -> Dict:
     """
     API to fetch all documents
     :param docs:
@@ -75,7 +85,7 @@ def get_docs(docs):
 
 
 @app.route('/api/get_doc_with_key/<key>', methods=['GET'])
-def get_doc_with_key(key):
+def get_doc_with_key(key) -> AnyStr:
     """
     API to fetch a specific document with key
     :param key:
@@ -90,7 +100,7 @@ def get_doc_with_key(key):
 
 
 @app.route('/api/process_data', methods=['GET'])
-def process():
+def process() -> Dict:
     """
     API to process_data
     :return: dictionary containing the processed text
@@ -111,7 +121,7 @@ def process():
 
 
 @app.route('/api/search_string/<search_string>', methods=['GET'])
-def search(search_string):
+def search(search_string)->Dict:
     """
     API to search "search_string" in the stored documents
     :param search_string: search string provided by the user
@@ -122,17 +132,6 @@ def search(search_string):
     processdata = SearchDocuments(search_string=search_string)
     res_list = processdata.get_relevant_documents()
     return {"search_results": res_list}
-
-
-@app.route('/api/get_tokens/<tokens>', methods=['GET'])
-def get_tokens(tokens):
-    dict_tokens = {}
-    for key in r_tokens.keys():
-        list_temp = []
-        while (r_tokens.llen(key) != 0):
-            list_temp.append(r_tokens.rpop(key))
-        dict_tokens[key] = list_temp
-    return dict_tokens
 
 
 if __name__ == '__main__':
