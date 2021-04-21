@@ -100,7 +100,7 @@ def get_doc_with_key(key) -> AnyStr:
 
 
 @app.route('/api/process_data', methods=['GET'])
-def process() -> Dict:
+def process() -> AnyStr:
     """
     API to process_data
     :return: dictionary containing the processed text
