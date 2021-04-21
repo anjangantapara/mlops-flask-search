@@ -43,8 +43,8 @@ class redis_io():
 redis_io.redis_connection = r_docs
 
 
-@app.route('/api/store/<submit_doc>', methods=['POST'])
-def store_input(submit_doc):
+@app.route('/api/store_doc/<submit_doc>', methods=['POST'])
+def store_doc(submit_doc):
     """
     API to store the input strings/documents
     :param submit_doc: not used
@@ -60,9 +60,33 @@ def store_input(submit_doc):
     return "Inserted the doc to redis"
 
 
-#    for i, val in enumerate(tokens):
-#        r_tokens.rpush(doc_name, val)
-#   return {"tokens": tokens}
+@app.route('/api/get_docs/<docs>', methods=['GET'])
+def get_docs(docs):
+    """
+    API to fetch all documents
+    :param docs:
+    :type docs:str
+    :return:
+    :rtype:dict
+    """
+    redis_db = redis_io(redis_connection=r_docs)
+    keys_values_dict = redis_db.get_all_keys_values()
+    return keys_values_dict
+
+
+@app.route('/api/get_doc_with_key/<key>', methods=['GET'])
+def get_doc_with_key(key):
+    """
+    API to fetch a specific document with key
+    :param key:
+    :type key:str
+    :return:
+    :rtype:dict
+    """
+    # redis_db = redis_io(redis_connection=r_docs)
+    # keys_values_dict = redis_db.get_all_keys_values()
+    doc = r_docs.get(key)
+    return doc
 
 
 @app.route('/api/process_data', methods=['GET'])
@@ -74,11 +98,10 @@ def process():
     """
     redis_db = redis_io(redis_connection=r_docs)
     all_doc_content = redis_db.get_all_keys_values()
-    #doc_content = redis_db.get_all_values()['doc_content']
+    # doc_content = redis_db.get_all_values()['doc_content']
     # initializing the input data
     SearchDocuments.set_documents(input_list_text=all_doc_content['doc_content'])
     SearchDocuments.set_documents_names(input_list_names=all_doc_content['doc_names'])
-
 
     # processing the text
     SearchDocuments.clean_all_documents()
@@ -99,34 +122,6 @@ def search(search_string):
     processdata = SearchDocuments(search_string=search_string)
     res_list = processdata.get_relevant_documents()
     return {"search_results": res_list}
-
-
-@app.route('/api/get_docs/<docs>', methods=['GET'])
-def get_docs(docs):
-    """
-    API to fetch all documents
-    :param docs:
-    :type docs:str
-    :return:
-    :rtype:dict
-    """
-    redis_db = redis_io(redis_connection=r_docs)
-    keys_values_dict = redis_db.get_all_keys_values()
-    return keys_values_dict
-
-@app.route('/api/get_doc_with_key/<key>', methods=['GET'])
-def get_doc_with_key(key):
-    """
-    API to fetch a specific document with key
-    :param key:
-    :type key:str
-    :return:
-    :rtype:dict
-    """
-    #redis_db = redis_io(redis_connection=r_docs)
-    #keys_values_dict = redis_db.get_all_keys_values()
-    doc = r_docs.get(key)
-    return doc
 
 
 @app.route('/api/get_tokens/<tokens>', methods=['GET'])
