@@ -100,7 +100,7 @@ def get_doc_with_key(key) -> AnyStr:
 
 
 @app.route('/api/process_data', methods=['GET'])
-def process() -> Dict:
+def process() -> AnyStr:
     """
     API to process_data
     :return: dictionary containing the processed text
@@ -117,10 +117,10 @@ def process() -> Dict:
     SearchDocuments.clean_all_documents()
     # calling create_tdm to create tdm matrix
     SearchDocuments.create_tdm()
-    return {'key': SearchDocuments.processed_documents}
+    return "Successfully created tf_idf matrix"
 
 
-@app.route('/api/search_string/<search_string>', methods=['GET'])
+@app.route('/api/search/<search_string>', methods=['GET'])
 def search(search_string)->Dict:
     """
     API to search "search_string" in the stored documents
