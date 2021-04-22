@@ -1,0 +1,1 @@
+from flasksearchapp.app import app

@@ -1,0 +1,17 @@
+version: "3"
+services:
+  flasksearchapp:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_HOST: redis
+
+  redis:
+    image: "redis:6.2"
+    command:
+      - "redis-server"
+      - "--appendonly"
+      - "yes"
+    volumes:
+      - /home/anjan/work/repos/mlops-flask-search/data:/data
